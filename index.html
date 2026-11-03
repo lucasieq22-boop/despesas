@@ -1,4 +1,255 @@
-async function handleSubmit(event) {
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Lançar Despesa</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+  <!-- Ícones do App (agora lidos diretamente pelo iOS sem iframe) -->
+  <link rel="icon" type="image/png" href="https://img.icons8.com/color/180/request-money.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="https://img.icons8.com/color/180/request-money.png">
+
+  <!-- Configurações para rodar em tela cheia como App nativo -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Despesas">
+
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      margin: 0;
+      padding: 6px 10px;
+      background: #f5f5f5;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 450px;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 14px 14px 16px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+    }
+
+    h1 {
+      font-size: 20px;
+      margin: 0 0 10px;
+      text-align: center;
+      color: #111;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 15px;
+      color: #333;
+      font-weight: 600;
+    }
+
+    textarea {
+      width: 100%;
+      font-size: 18px !important;
+      font-family: inherit;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1.5px solid #c7c7c7;
+      outline: none;
+      resize: none;
+      min-height: 65px;
+      height: 65px;
+      line-height: 1.35;
+      display: block;
+      -webkit-appearance: none;
+    }
+
+    textarea::placeholder {
+      color: #aaa;
+    }
+
+    textarea:focus {
+      border-color: #4285f4;
+      box-shadow: 0 0 0 2px rgba(66,133,244,0.2);
+    }
+
+    .field {
+      margin-bottom: 8px;
+    }
+
+    .tabela-atalhos {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 5px;
+      margin-top: 6px;
+      table-layout: fixed;
+    }
+
+    .tabela-atalhos td {
+      width: 33.333% !important;
+      padding: 0;
+    }
+
+    .tabela-atalhos button {
+      width: 100% !important;
+      height: 34px;
+      padding: 0 2px;
+      border-radius: 8px;
+      background: #eef3ff;
+      color: #222;
+      font-size: 13.5px;
+      font-weight: 600;
+      font-family: inherit;
+      border: 1px solid #d5e2ff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      -webkit-appearance: none;
+    }
+
+    .tabela-atalhos button:active {
+      background: #cddcff;
+      transform: scale(0.96);
+    }
+
+    #btn-salvar {
+      width: 100%;
+      font-size: 17px;
+      font-family: inherit;
+      margin-top: 10px;
+      padding: 12px;
+      border-radius: 999px;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+      background: #4285f4;
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      letter-spacing: 0.02em;
+      box-shadow: 0 3px 10px rgba(66,133,244,0.3);
+      -webkit-appearance: none;
+    }
+
+    #btn-salvar:active {
+      transform: scale(0.98);
+    }
+
+    #btn-salvar:disabled {
+      opacity: 0.65;
+      cursor: default;
+    }
+
+    .msg {
+      margin-top: 10px;
+      font-size: 15px;
+      text-align: center;
+      font-weight: 500;
+    }
+
+    .msg.ok {
+      color: #0c7c3c;
+    }
+
+    .msg.erro {
+      color: #d93025;
+    }
+
+    .hint {
+      font-size: 12px;
+      color: #777;
+      margin-top: 6px;
+      line-height: 1.3;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h1>Registrar Despesa</h1>
+
+      <form id="form-despesa" onsubmit="handleSubmit(event)">
+        <div class="field">
+          <label for="linha">Despesa (valor + descrição)</label>
+          <textarea id="linha" name="linha"
+            placeholder="Ex: 35,90 almoço shopping&#10;Ex: 120 gasolina"
+            required></textarea>
+
+          <table class="tabela-atalhos">
+            <tr>
+              <td><button type="button" onclick="inserirDescricao('café')">☕ Café</button></td>
+              <td><button type="button" onclick="inserirDescricao('almoço')">🍽️ Almoço</button></td>
+              <td><button type="button" onclick="inserirDescricao('janta')">🌙 Janta</button></td>
+            </tr>
+            <tr>
+              <td><button type="button" onclick="inserirDescricao('gasolina')">⛽ Posto</button></td>
+              <td><button type="button" onclick="inserirDescricao('lanche')">😋 Lanche</button></td>
+              <td><button type="button" onclick="inserirDescricao('mercado')">🛒 Mercado</button></td>
+            </tr>
+            <tr>
+              <td><button type="button" onclick="inserirDescricao('receita')">💵 Receita</button></td>
+              <td><button type="button" onclick="inserirDescricao('revenda')">🛍️ Revenda</button></td>
+              <td><button type="button" onclick="inserirDescricao('lazer')">🚴 Lazer</button></td>
+            </tr>
+            <tr>
+              <td><button type="button" onclick="inserirDescricao('investimento')">👜 Invest.</button></td>
+              <td><button type="button" onclick="inserirDescricao('moradia')">🏠 Moradia</button></td>
+              <td><button type="button" onclick="inserirDescricao('doação')">🩸 Doação</button></td>
+            </tr>
+          </table>
+
+          <div class="hint">
+            Digite o valor primeiro e depois a descrição, na mesma linha.
+          </div>
+        </div>
+
+        <button type="submit" id="btn-salvar">Salvar despesa</button>
+      </form>
+
+      <div id="mensagem" class="msg"></div>
+    </div>
+  </div>
+
+  <script>
+    // ⚠️ SUBSTITUA PELO SEU LINK /exec DO APPS SCRIPT:
+    const API_URL = "https://script.google.com/macros/s/AKfycbzDjqifo8xTwA9hsyN2JJ7Vfj661kIFjnYmHPPo-fFOO52J8I69soLye_49X7Dq73O3/exec";
+
+    function inserirDescricao(descricao) {
+      const campo = document.getElementById('linha');
+      let texto = campo.value.trim();
+
+      if (!texto) {
+        campo.value = descricao;
+        campo.focus();
+        return;
+      }
+
+      const partes = texto.split(/\s+/);
+      if (partes.length === 1) {
+        campo.value = texto + ' ' + descricao;
+      } else {
+        campo.value = partes[0] + ' ' + descricao;
+      }
+      campo.focus();
+    }
+
+    async function handleSubmit(event) {
       event.preventDefault();
 
       const linhaInput = document.getElementById('linha');
@@ -18,47 +269,35 @@ async function handleSubmit(event) {
       msg.className = 'msg';
 
       try {
+        // Envio direto via fetch para o Google Apps Script
         const response = await fetch(API_URL, {
           method: 'POST',
-          redirect: 'follow', // Segue o redirecionamento 302 obrigatório do Apps Script
+          body: JSON.stringify({ texto: texto }),
           headers: {
-            'Content-Type': 'text/plain;charset=utf-8' // Crucial: evita bloqueio de pré-flight do CORS
-          },
-          body: JSON.stringify({ texto: texto })
+            'Content-Type': 'text/plain;charset=utf-8' // text/plain evita bloqueio de CORS pré-flight
+          }
         });
 
-        const textoResposta = await response.text();
-        let retorno;
-        
-        try {
-          retorno = JSON.parse(textoResposta);
-        } catch (e) {
-          // Se não conseguir converter para JSON mas o status for 200/OK, considera salvo
-          retorno = { ok: true, valor: '', categoria: 'Lançado' };
-        }
+        const retorno = await response.json();
 
         if (retorno.ok) {
-          let detalhes = '';
-          if (retorno.valor) {
-            detalhes += `Valor: R$ ${Number(retorno.valor).toFixed(2).replace('.', ',')} | `;
-          }
-          if (retorno.categoria) {
-            detalhes += `Categoria: ${retorno.categoria}`;
-          }
-
-          msg.textContent = `Despesa salva! ${detalhes}`.trim();
+          const valorFormatado = Number(retorno.valor).toFixed(2).replace('.', ',');
+          msg.textContent = `Despesa salva! Valor: R$ ${valorFormatado} | Categoria: ${retorno.categoria}`;
           msg.className = 'msg ok';
           linhaInput.value = '';
           linhaInput.focus();
         } else {
-          throw new Error(retorno.message || 'Erro ao processar dados.');
+          throw new Error(retorno.message || 'Erro ao salvar despesa.');
         }
 
       } catch (erro) {
-        msg.textContent = erro.message || 'Erro de comunicação com a planilha.';
+        msg.textContent = erro.message || 'Erro de conexão ao salvar despesa.';
         msg.className = 'msg erro';
       } finally {
         btn.disabled = false;
         btn.textContent = 'Salvar despesa';
       }
     }
+  </script>
+</body>
+</html>
