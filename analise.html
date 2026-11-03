@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Controle de Despesas</title>
+
+  <!-- ================= FAVICON E ÍCONES APPLE ================= -->
+  <!-- Favicon para navegadores convencionais -->
+  <link rel="icon" type="image/png" href="https://img.icons8.com/color/180/accounting.png">
+  <link rel="shortcut icon" href="https://img.icons8.com/color/180/accounting.png">
+
+  <!-- Ícones para Tela de Início Apple (iOS / iPadOS) -->
+  <link rel="apple-touch-icon" href="https://img.icons8.com/color/180/accounting.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="https://img.icons8.com/color/180/accounting.png">
+  <link rel="apple-touch-icon" sizes="167x167" href="https://img.icons8.com/color/180/accounting.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="https://img.icons8.com/color/180/accounting.png">
+  <link rel="apple-touch-icon-precomposed" href="https://img.icons8.com/color/180/accounting.png">
+
+  <!-- Configurações para abrir como App nativo em tela cheia no Safari (iOS) -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Despesas">
+  <!-- ========================================================== -->
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0f9ff',
+              100: '#e0f2fe',
+              500: '#0284c7',
+              600: '#0369a1',
+              900: '#0c4a6e',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    *, ::before, ::after {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      width: 100%;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+      background-color: #f8fafc;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    input[type="date"] {
+      -webkit-appearance: none;
+      min-height: 40px;
+    }
+  </style>
+</head>
+<body class="text-slate-700 pb-12">
+
+  <!-- Header -->
+  <header class="bg-white border-b border-slate-100 sticky top-0 z-30 shadow-sm w-full">
+    <div class="w-full max-w-md mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center space-x-2 min-w-0">
+        <div class="w-8 h-8 rounded-xl bg-brand-500 flex items-center justify-center text-white flex-shrink-0">
+          <i class="ph-bold ph-wallet text-lg"></i>
+        </div>
+        <div class="min-w-0">
+          <h1 class="font-bold text-slate-800 text-sm tracking-tight leading-none truncate">Controle Financeiro</h1>
+          <span class="text-[10px] text-slate-400 block truncate">Aba: Ctrl. Despesas</span>
+        </div>
+      </div>
+      <button onclick="carregarDados()" id="btn-refresh" class="p-2 text-slate-400 hover:text-brand-500 rounded-lg active:bg-slate-50 transition flex-shrink-0 ml-2">
+        <i class="ph-bold ph-arrows-clockwise text-xl"></i>
+      </button>
+    </div>
+  </header>
+
+  <main class="w-full max-w-md mx-auto px-4 pt-4 space-y-4">
+
+    <!-- Indicador de Carregamento -->
+    <div id="loader" class="hidden bg-white p-4 rounded-2xl border border-slate-100 shadow-sm text-center">
+      <div class="inline-block animate-spin rounded-full h-6 w-6 border-2 border-brand-500 border-t-transparent"></div>
+      <p class="text-xs text-slate-400 mt-2">Buscando dados na planilha...</p>
+    </div>
+
+    <!-- Filtro de Datas -->
+    <section class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-3 w-full">
+      <div class="flex items-center justify-between flex-wrap gap-1">
+        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Filtrar Período</span>
+        <div class="space-x-2 flex-shrink-0">
+          <button onclick="definirMesAtual()" class="text-xs text-brand-500 hover:underline">Mês Atual</button>
+          <button onclick="definirMesAnterior()" class="text-xs text-slate-500 hover:underline">Mês Anterior</button>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-2 w-full">
+        <div class="min-w-0">
+          <label class="text-[10px] text-slate-400 block mb-1">DATA INICIAL</label>
+          <input type="date" id="data-inicio" onchange="aplicarFiltros()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 text-xs focus:outline-none focus:border-brand-500">
+        </div>
+        <div class="min-w-0">
+          <label class="text-[10px] text-slate-400 block mb-1">DATA FINAL</label>
+          <input type="date" id="data-fim" onchange="aplicarFiltros()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 text-xs focus:outline-none focus:border-brand-500">
+        </div>
+      </div>
+    </section>
+
+    <!-- Resumo Total -->
+    <section class="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-5 rounded-2xl shadow-lg relative overflow-hidden w-full">
+      <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-white/5 rounded-full blur-xl"></div>
+      <span class="text-xs text-slate-400 font-medium block">Total do Período (Despesas - Receitas)</span>
+      <div class="text-2xl sm:text-3xl font-bold mt-1 tracking-tight break-words" id="total-gastos">R$ 0,00</div>
+      <div class="mt-4 flex items-center justify-between text-xs text-slate-400 border-t border-slate-700/50 pt-3">
+        <span>Lançamentos no período:</span>
+        <span id="qtd-lancamentos" class="font-medium text-white">0</span>
+      </div>
+    </section>
+
+    <!-- Gráfico Comparativo -->
+    <section class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-3 w-full overflow-hidden">
+      <div class="flex items-center justify-between">
+        <h2 class="text-sm font-semibold text-slate-800">Comparativo por Categoria</h2>
+        <i class="ph-bold ph-chart-bar text-slate-400"></i>
+      </div>
+      <div class="h-52 relative w-full">
+        <canvas id="chartEvolucao"></canvas>
+      </div>
+    </section>
+
+    <!-- Agrupamento por Categoria -->
+    <section class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-3 w-full">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-sm font-semibold text-slate-800">Soma por Categoria</h2>
+          <p class="text-[10px] text-slate-400">Clique em uma categoria para filtrar os lançamentos</p>
+        </div>
+        <i class="ph-bold ph-chart-pie text-slate-400"></i>
+      </div>
+      <div id="lista-categorias" class="space-y-2 pt-1 w-full"></div>
+    </section>
+
+    <!-- Últimas Despesas Lançadas -->
+    <section class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-3 w-full">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-2 min-w-0">
+          <h2 class="text-sm font-semibold text-slate-800 flex-shrink-0" id="titulo-ultimos">Últimos Lançamentos</h2>
+          <span id="badge-categoria-filtrada" class="hidden text-[10px] bg-brand-100 text-brand-600 px-2 py-0.5 rounded-full font-medium truncate"></span>
+        </div>
+        <button id="btn-limpar-categoria" onclick="filtrarPorCategoria(null)" class="hidden text-xs text-brand-500 hover:underline flex-shrink-0 ml-1">Ver Todas</button>
+      </div>
+      <div id="lista-despesas" class="divide-y divide-slate-100 w-full"></div>
+    </section>
+
+  </main>
+
+  <script>
+    // ⚠️ SUBSTITUA PELO SEU LINK /exec DO APPS SCRIPT:
+    const API_URL = "https://script.google.com/macros/s/SEU_ID_DO_SCRIPT/exec";
+
+    let dadosCompletos = [];
+    let dadosFiltradosData = [];
+    let categoriaSelecionada = null;
+    let chartEvolucaoInstance = null;
+
+    window.onload = function() {
+      definirMesAtual();
+      carregarDados();
+    };
+
+    function definirMesAtual() {
+      const agora = new Date();
+      const ano = agora.getFullYear();
+      const mes = agora.getMonth();
+
+      const primeiroDia = new Date(ano, mes, 1);
+      const ultimoDia = new Date(ano, mes + 1, 0);
+
+      document.getElementById('data-inicio').value = formatarDataInput(primeiroDia);
+      document.getElementById('data-fim').value = formatarDataInput(ultimoDia);
+
+      if (dadosCompletos.length > 0) {
+        aplicarFiltros();
+      }
+    }
+
+    function definirMesAnterior() {
+      const agora = new Date();
+      const ano = agora.getFullYear();
+      const mes = agora.getMonth();
+
+      const primeiroDia = new Date(ano, mes - 1, 1);
+      const ultimoDia = new Date(ano, mes, 0);
+
+      document.getElementById('data-inicio').value = formatarDataInput(primeiroDia);
+      document.getElementById('data-fim').value = formatarDataInput(ultimoDia);
+
+      if (dadosCompletos.length > 0) {
+        aplicarFiltros();
+      }
+    }
+
+    function formatarDataInput(dataObj) {
+      const ano = dataObj.getFullYear();
+      const mes = String(dataObj.getMonth() + 1).padStart(2, '0');
+      const dia = String(dataObj.getDate()).padStart(2, '0');
+      return `${ano}-${mes}-${dia}`;
+    }
+
+    async function carregarDados() {
+      const loader = document.getElementById('loader');
+      const btnRefresh = document.getElementById('btn-refresh');
+      
+      loader.classList.remove('hidden');
+      btnRefresh.classList.add('animate-spin');
+
+      try {
+        const urlFinal = API_URL.includes('?') 
+          ? `${API_URL}&format=json` 
+          : `${API_URL}?format=json`;
+
+        const response = await fetch(urlFinal, {
+          method: 'GET',
+          redirect: 'follow'
+        });
+
+        const data = await response.json();
+
+        if (!data.ok) {
+          throw new Error(data.message || 'Erro ao processar dados da planilha.');
+        }
+
+        dadosCompletos = data.expenses || [];
+        aplicarFiltros();
+
+      } catch (err) {
+        console.error(err);
+        alert('Erro ao carregar dados: ' + err.message);
+      } finally {
+        loader.classList.add('hidden');
+        btnRefresh.classList.remove('animate-spin');
+      }
+    }
+
+    function filtrarArrayPorData(array) {
+      const dataInicioStr = document.getElementById('data-inicio').value;
+      const dataFimStr = document.getElementById('data-fim').value;
+
+      let filtrados = array;
+      if (dataInicioStr) filtrados = filtrados.filter(item => item.rawDate >= dataInicioStr);
+      if (dataFimStr) filtrados = filtrados.filter(item => item.rawDate <= dataFimStr);
+      return filtrados;
+    }
+
+    function aplicarFiltros() {
+      dadosFiltradosData = filtrarArrayPorData(dadosCompletos);
+      atualizarInterface();
+    }
+
+    function filtrarPorCategoria(nomeCat) {
+      if (categoriaSelecionada === nomeCat) {
+        categoriaSelecionada = null;
+      } else {
+        categoriaSelecionada = nomeCat;
+      }
+      atualizarInterface();
+    }
+
+    function atualizarInterface() {
+      const total = dadosFiltradosData.reduce((sum, item) => {
+        if (isReceita(item.categoria)) {
+          return sum - item.valor;
+        } else {
+          return sum + item.valor;
+        }
+      }, 0);
+
+      const totalDespesasBrutas = dadosFiltradosData.reduce((sum, item) => {
+        return !isReceita(item.categoria) ? sum + item.valor : sum;
+      }, 0);
+
+      document.getElementById('total-gastos').innerText = formatarMoeda(total);
+      document.getElementById('qtd-lancamentos').innerText = dadosFiltradosData.length;
+
+      renderizarGraficoCategorias(dadosFiltradosData);
+      renderizarCategorias(dadosFiltradosData, totalDespesasBrutas);
+      renderizarUltimasDespesas(dadosFiltradosData);
+    }
+
+    function formatarMoeda(valor) {
+      return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    function isReceita(categoriaNome) {
+      return String(categoriaNome).trim().toLowerCase().includes('receita');
+    }
+
+    function renderizarGraficoCategorias(dados) {
+      const ctx = document.getElementById('chartEvolucao').getContext('2d');
+
+      const agrupadoPorCat = {};
+      dados.forEach(item => {
+        const cat = item.categoria;
+        agrupadoPorCat[cat] = (agrupadoPorCat[cat] || 0) + item.valor;
+      });
+
+      const ordenados = Object.keys(agrupadoPorCat)
+        .map(cat => ({ nome: cat, valor: agrupadoPorCat[cat] }))
+        .sort((a, b) => b.valor - a.valor);
+
+      const labels = ordenados.map(item => item.nome);
+      const valores = ordenados.map(item => item.valor);
+
+      const coresBarras = ordenados.map(item => 
+        isReceita(item.nome) ? '#10b981' : '#0284c7'
+      );
+
+      if (chartEvolucaoInstance) {
+        chartEvolucaoInstance.destroy();
+      }
+
+      chartEvolucaoInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Valor Total (R$)',
+            data: valores,
+            backgroundColor: coresBarras,
+            borderRadius: 6,
+            maxBarThickness: 32
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: context => 'R$ ' + context.parsed.y.toLocaleString('pt-BR', { minimumFractionDigits: 2 })
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: { 
+                font: { size: 10 },
+                maxRotation: 45,
+                minRotation: 0
+              }
+            },
+            y: {
+              border: { dash: [4, 4] },
+              ticks: { font: { size: 10 } }
+            }
+          }
+        }
+      });
+    }
+
+    function renderizarCategorias(dados, totalDespesasBrutas) {
+      const container = document.getElementById('lista-categorias');
+      container.innerHTML = '';
+
+      if (dados.length === 0) {
+        container.innerHTML = `<p class="text-xs text-slate-400 py-2 text-center">Nenhum lançamento neste período.</p>`;
+        return;
+      }
+
+      const categorias = {};
+      dados.forEach(item => {
+        const cat = item.categoria;
+        categorias[cat] = (categorias[cat] || 0) + item.valor;
+      });
+
+      const ordenados = Object.keys(categorias)
+        .map(cat => ({ nome: cat, valor: categorias[cat] }))
+        .sort((a, b) => b.valor - a.valor);
+
+      ordenados.forEach(cat => {
+        const eReceita = isReceita(cat.nome);
+        const estaSelecionada = categoriaSelecionada === cat.nome;
+
+        const baseCalculo = totalDespesasBrutas > 0 ? totalDespesasBrutas : cat.valor;
+        const porcentagem = baseCalculo > 0 ? ((cat.valor / baseCalculo) * 100).toFixed(1) : 0;
+
+        const corBarra = eReceita ? 'bg-emerald-500' : 'bg-brand-500';
+        const corTextoValor = eReceita ? 'text-emerald-600' : 'text-slate-800';
+        const corBgCard = estaSelecionada ? (eReceita ? 'bg-emerald-50 border-emerald-200' : 'bg-sky-50 border-sky-200') : 'hover:bg-slate-50 border-transparent';
+
+        const html = `
+          <div onclick="filtrarPorCategoria('${cat.nome}')" class="p-2 rounded-xl border transition cursor-pointer ${corBgCard} w-full">
+            <div class="flex justify-between items-center text-xs mb-1 min-w-0">
+              <span class="font-medium text-slate-700 flex items-center space-x-1 min-w-0 mr-2">
+                ${eReceita ? '<i class="ph-bold ph-arrow-circle-down text-emerald-500 flex-shrink-0"></i>' : ''}
+                <span class="truncate">${cat.nome}</span>
+              </span>
+              <span class="font-semibold ${corTextoValor} flex-shrink-0 ml-auto">${formatarMoeda(cat.valor)} <span class="text-[10px] text-slate-400 font-normal">(${porcentagem}%)</span></span>
+            </div>
+            <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+              <div class="${corBarra} h-2 rounded-full transition-all duration-300" style="width: ${porcentagem}%"></div>
+            </div>
+          </div>
+        `;
+        container.innerHTML += html;
+      });
+    }
+
+    function renderizarUltimasDespesas(dados) {
+      const container = document.getElementById('lista-despesas');
+      const badgeCat = document.getElementById('badge-categoria-filtrada');
+      const btnLimparCat = document.getElementById('btn-limpar-categoria');
+      container.innerHTML = '';
+
+      let dadosParaExibir = dados;
+      if (categoriaSelecionada) {
+        dadosParaExibir = dados.filter(item => item.categoria === categoriaSelecionada);
+        badgeCat.innerText = categoriaSelecionada;
+        badgeCat.classList.remove('hidden');
+        btnLimparCat.classList.remove('hidden');
+      } else {
+        badgeCat.classList.add('hidden');
+        btnLimparCat.classList.add('hidden');
+      }
+
+      if (dadosParaExibir.length === 0) {
+        container.innerHTML = `<p class="text-xs text-slate-400 py-4 text-center">Sem lançamentos para esta exibição.</p>`;
+        return;
+      }
+
+      dadosParaExibir.slice(0, 30).forEach(item => {
+        const eReceita = isReceita(item.categoria);
+        const iconBg = eReceita ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-500';
+        const iconClass = eReceita ? 'ph-arrow-down-left' : 'ph-receipt';
+        const badgeCatCor = eReceita ? 'text-emerald-600 font-semibold' : 'text-brand-600 font-medium';
+
+        const html = `
+          <div class="py-3 flex items-center justify-between w-full">
+            <div class="flex items-center space-x-3 min-w-0 flex-1 mr-2">
+              <div class="w-9 h-9 rounded-xl ${iconBg} flex items-center justify-center flex-shrink-0">
+                <i class="ph-bold ${iconClass} text-base"></i>
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="text-xs font-semibold text-slate-800 truncate">${item.descricao}</p>
+                <div class="flex items-center space-x-2 text-[10px] text-slate-400 min-w-0">
+                  <span class="${badgeCatCor} truncate max-w-[90px] inline-block">${item.categoria}</span>
+                  <span>•</span>
+                  <span class="flex-shrink-0">${item.displayDate}</span>
+                </div>
+              </div>
+            </div>
+            <div class="text-right flex-shrink-0">
+              <span class="text-xs font-bold ${eReceita ? 'text-emerald-600' : 'text-slate-800'} block">${formatarMoeda(item.valor)}</span>
+            </div>
+          </div>
+        `;
+        container.innerHTML += html;
+      });
+    }
+  </script>
+</body>
+</html>
