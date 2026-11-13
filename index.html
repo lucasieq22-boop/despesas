@@ -214,7 +214,7 @@
         <div class="field">
           <div class="label-row">
             <label for="linha">Despesa (valor + descrição)</label>
-            <button type="button" id="btn-teclado" onclick="alternarTeclado()">🔢 Números</button>
+            <button type="button" id="btn-teclado" onclick="alternarTeclado()">🔤 Letras</button>
           </div>
 
           <textarea id="linha" name="linha" inputmode="decimal"
@@ -265,7 +265,7 @@
       const btn = document.getElementById('btn-teclado');
 
       campo.setAttribute('inputmode', modo);
-      btn.textContent = modo === 'decimal' ? '🔢 Números' : '🔤 Letras';
+      btn.textContent = modo === 'decimal' ? '🔤 Letras' : '🔢 Números';
     }
 
     function alternarTeclado() {
@@ -340,7 +340,7 @@
           msg.textContent = `Despesa salva! Valor: R$ ${valorFormatado} | Categoria: ${retorno.categoria}`;
           msg.className = 'msg ok';
           linhaInput.value = '';
-          definirModoTeclado('decimal'); // Volta para numérico e exibe "🔢 Números"
+          definirModoTeclado('decimal'); // Volta para numérico para o próximo lançamento
           linhaInput.focus();
         } else {
           throw new Error(retorno.message || 'Erro ao salvar despesa.');
