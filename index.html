@@ -74,7 +74,8 @@
       display: inline-flex;
       align-items: center;
       gap: 4px;
-      -webkit-appearance: none;
+      user-select: none;
+      -webkit-user-select: none;
     }
 
     #btn-teclado:active {
@@ -124,7 +125,7 @@
       padding: 0;
     }
 
-    .tabela-atalhos button {
+    .atalho-btn {
       width: 100% !important;
       height: 34px;
       padding: 0 2px;
@@ -142,10 +143,11 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      -webkit-appearance: none;
+      user-select: none;
+      -webkit-user-select: none;
     }
 
-    .tabela-atalhos button:active {
+    .atalho-btn:active {
       background: #cddcff;
       transform: scale(0.96);
     }
@@ -212,7 +214,10 @@
         <div class="field">
           <div class="label-row">
             <label for="linha">Despesa (valor + descrição)</label>
-            <button type="button" id="btn-teclado" onpointerdown="event.preventDefault()" onclick="alternarTeclado()">🔢 Números</button>
+            <div role="button" tabindex="-1" id="btn-teclado"
+              ontouchstart="event.preventDefault()"
+              ontouchend="alternarTeclado()"
+              onclick="alternarTeclado()">🔢 Números</div>
           </div>
 
           <textarea id="linha" name="linha" inputmode="decimal"
@@ -221,24 +226,24 @@
 
           <table class="tabela-atalhos">
             <tr>
-              <td><button type="button" onpointerdown="event.preventDefault()" onclick="inserirDescricao('café')">☕ Café</button></td>
-              <td><button type="button" onpointerdown="event.preventDefault()" onclick="inserirDescricao('almoço')">🍽️ Almoço</button></td>
-              <td><button type="button" onpointerdown="event.preventDefault()" onclick="inserirDescricao('janta')">🌙 Janta</button></td>
+              <td><div role="button" class="atalho-btn" ontouchstart="event.preventDefault()" ontouchend="inserirDescricao('café')" onclick="inserirDescricao('café')">☕ Café</div></td>
+              <td><div role="button" class="atalho-btn" ontouchstart="event.preventDefault()" ontouchend="inserirDescricao('almoço')" onclick="inserirDescricao('almoço')">🍽️ Almoço</div></td>
+              <td><div role="button" class="atalho-btn" ontouchstart="event.preventDefault()" ontouchend="inserirDescricao('janta')" onclick="inserirDescricao('janta')">🌙 Janta</div></td>
             </tr>
             <tr>
-              <td><button type="button" onpointerdown="event.preventDefault()" onclick="inserirDescricao('gasolina')">⛽ Posto</button></td>
-              <td><button type="button" onpointerdown="event.preventDefault()" onclick="inserirDescricao('lanche')">😋 Lanche</button></td>
-              <td><button type="button" onpointerdown="event.preventDefault()" onclick="inserirDescricao('mercado')">🛒 Mercado</button></td>
+              <td><div role="button" class="atalho-btn" ontouchstart="event.preventDefault()" ontouchend="inserirDescricao('gasolina')" onclick="inserirDescricao('gasolina')">⛽ Posto</div></td>
+              <td><div role="button" class="atalho-btn" ontouchstart="event.preventDefault()" ontouchend="inserirDescricao('lanche')" onclick="inserirDescricao('lanche')">😋 Lanche</div></td>
+              <td><div role="button" class="atalho-btn" ontouchstart="event.preventDefault()" ontouchend="inserirDescricao('mercado')" onclick="inserirDescricao('mercado')">🛒 Mercado</div></td>
             </tr>
             <tr>
-              <td><button type="button" onpointerdown="event.preventDefault()" onclick="inserirDescricao('receita')">💵 Receita</button></td>
-              <td><button type="button" onpointerdown="event.preventDefault()" onclick="inserirDescricao('revenda')">🛍️ Revenda</button></td>
-              <td><button type="button" onpointerdown="event.preventDefault()" onclick="inserirDescricao('lazer')">🚴 Lazer</button></td>
+              <td><div role="button" class="atalho-btn" ontouchstart="event.preventDefault()" ontouchend="inserirDescricao('receita')" onclick="inserirDescricao('receita')">💵 Receita</div></td>
+              <td><div role="button" class="atalho-btn" ontouchstart="event.preventDefault()" ontouchend="inserirDescricao('revenda')" onclick="inserirDescricao('revenda')">🛍️ Revenda</div></td>
+              <td><div role="button" class="atalho-btn" ontouchstart="event.preventDefault()" ontouchend="inserirDescricao('lazer')" onclick="inserirDescricao('lazer')">🚴 Lazer</div></td>
             </tr>
             <tr>
-              <td><button type="button" onpointerdown="event.preventDefault()" onclick="inserirDescricao('investimento')">👜 Invest.</button></td>
-              <td><button type="button" onpointerdown="event.preventDefault()" onclick="inserirDescricao('moradia')">🏠 Moradia</button></td>
-              <td><button type="button" onpointerdown="event.preventDefault()" onclick="inserirDescricao('doação')">🩸 Doação</button></td>
+              <td><div role="button" class="atalho-btn" ontouchstart="event.preventDefault()" ontouchend="inserirDescricao('investimento')" onclick="inserirDescricao('investimento')">👜 Invest.</div></td>
+              <td><div role="button" class="atalho-btn" ontouchstart="event.preventDefault()" ontouchend="inserirDescricao('moradia')" onclick="inserirDescricao('moradia')">🏠 Moradia</div></td>
+              <td><div role="button" class="atalho-btn" ontouchstart="event.preventDefault()" ontouchend="inserirDescricao('doação')" onclick="inserirDescricao('doação')">🩸 Doação</div></td>
             </tr>
           </table>
 
@@ -256,6 +261,7 @@
 
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbzDjqifo8xTwA9hsyN2JJ7Vfj661kIFjnYmHPPo-fFOO52J8I69soLye_49X7Dq73O3/exec";
+    let ultimoToque = 0;
 
     function definirModoTeclado(modo) {
       const campo = document.getElementById('linha');
@@ -274,6 +280,10 @@
     }
 
     function alternarTeclado() {
+      const agora = Date.now();
+      if (agora - ultimoToque < 250) return; // evita disparo duplo entre touchend e click
+      ultimoToque = agora;
+
       const campo = document.getElementById('linha');
       const modoAtual = campo.getAttribute('inputmode');
       const novoModo = modoAtual === 'decimal' ? 'text' : 'decimal';
@@ -286,6 +296,10 @@
     window.addEventListener('pageshow', () => definirModoTeclado('decimal'));
 
     function inserirDescricao(descricao) {
+      const agora = Date.now();
+      if (agora - ultimoToque < 250) return; // evita disparo duplo entre touchend e click
+      ultimoToque = agora;
+
       const campo = document.getElementById('linha');
       let texto = campo.value.trim();
 
@@ -301,10 +315,9 @@
       }
 
       if (campo.getAttribute('inputmode') === 'decimal') {
-        alternarTeclado();
-      } else {
-        focarNoFinal();
+        definirModoTeclado('text');
       }
+      focarNoFinal();
     }
 
     async function handleSubmit(event) {
