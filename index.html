@@ -264,18 +264,18 @@
       const campo = document.getElementById('linha');
       const btn = document.getElementById('btn-teclado');
 
+      campo.inputMode = modo;
       campo.setAttribute('inputmode', modo);
       btn.textContent = modo === 'decimal' ? '🔢 Números' : '🔤 Letras';
     }
 
     function focarComNovoTeclado() {
       const campo = document.getElementById('linha');
+      // Troca de foco síncrona dentro do evento de clique para o iOS/Android respeitar o novo inputmode
       campo.blur();
-      setTimeout(() => {
-        campo.focus();
-        const len = campo.value.length;
-        campo.setSelectionRange(len, len);
-      }, 50);
+      campo.focus();
+      const len = campo.value.length;
+      campo.setSelectionRange(len, len);
     }
 
     function alternarTeclado() {
@@ -306,7 +306,7 @@
         }
       }
 
-      // Muda automaticamente para o teclado de letras e atualiza o botão para "🔤 Letras"
+      // Muda para o teclado de letras e força o foco imediato no mesmo gesto do usuário
       definirModoTeclado('text');
       focarComNovoTeclado();
     }
@@ -347,7 +347,7 @@
           msg.className = 'msg ok';
           linhaInput.value = '';
           definirModoTeclado('decimal');
-          linhaInput.focus();
+          focarComNovoTeclado();
         } else {
           throw new Error(retorno.message || 'Erro ao salvar despesa.');
         }
