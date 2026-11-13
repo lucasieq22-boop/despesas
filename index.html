@@ -265,7 +265,7 @@
       const btn = document.getElementById('btn-teclado');
 
       campo.setAttribute('inputmode', modo);
-      btn.textContent = modo === 'decimal' ? '🔤 Letras' : '🔢 Números';
+      btn.textContent = modo === 'decimal' ? '🔢 Números' : '🔤 Letras';
     }
 
     function alternarTeclado() {
@@ -340,7 +340,7 @@
           msg.textContent = `Despesa salva! Valor: R$ ${valorFormatado} | Categoria: ${retorno.categoria}`;
           msg.className = 'msg ok';
           linhaInput.value = '';
-          definirModoTeclado('decimal'); // Volta para numérico para o próximo lançamento
+          definirModoTeclado('decimal'); // Volta para numérico e exibe "🔢 Números"
           linhaInput.focus();
         } else {
           throw new Error(retorno.message || 'Erro ao salvar despesa.');
