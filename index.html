@@ -212,7 +212,7 @@
         <div class="field">
           <div class="label-row">
             <label for="linha">Despesa (valor + descrição)</label>
-            <button type="button" id="btn-teclado" onclick="alternarTeclado()">🔢 Números</button>
+            <button type="button" id="btn-teclado" onpointerdown="event.preventDefault()" onclick="alternarTeclado()">🔢 Números</button>
           </div>
 
           <textarea id="linha" name="linha" inputmode="decimal"
@@ -221,24 +221,24 @@
 
           <table class="tabela-atalhos">
             <tr>
-              <td><button type="button" onclick="inserirDescricao('café')">☕ Café</button></td>
-              <td><button type="button" onclick="inserirDescricao('almoço')">🍽️ Almoço</button></td>
-              <td><button type="button" onclick="inserirDescricao('janta')">🌙 Janta</button></td>
+              <td><button type="button" onpointerdown="event.preventDefault()" onclick="inserirDescricao('café')">☕ Café</button></td>
+              <td><button type="button" onpointerdown="event.preventDefault()" onclick="inserirDescricao('almoço')">🍽️ Almoço</button></td>
+              <td><button type="button" onpointerdown="event.preventDefault()" onclick="inserirDescricao('janta')">🌙 Janta</button></td>
             </tr>
             <tr>
-              <td><button type="button" onclick="inserirDescricao('gasolina')">⛽ Posto</button></td>
-              <td><button type="button" onclick="inserirDescricao('lanche')">😋 Lanche</button></td>
-              <td><button type="button" onclick="inserirDescricao('mercado')">🛒 Mercado</button></td>
+              <td><button type="button" onpointerdown="event.preventDefault()" onclick="inserirDescricao('gasolina')">⛽ Posto</button></td>
+              <td><button type="button" onpointerdown="event.preventDefault()" onclick="inserirDescricao('lanche')">😋 Lanche</button></td>
+              <td><button type="button" onpointerdown="event.preventDefault()" onclick="inserirDescricao('mercado')">🛒 Mercado</button></td>
             </tr>
             <tr>
-              <td><button type="button" onclick="inserirDescricao('receita')">💵 Receita</button></td>
-              <td><button type="button" onclick="inserirDescricao('revenda')">🛍️ Revenda</button></td>
-              <td><button type="button" onclick="inserirDescricao('lazer')">🚴 Lazer</button></td>
+              <td><button type="button" onpointerdown="event.preventDefault()" onclick="inserirDescricao('receita')">💵 Receita</button></td>
+              <td><button type="button" onpointerdown="event.preventDefault()" onclick="inserirDescricao('revenda')">🛍️ Revenda</button></td>
+              <td><button type="button" onpointerdown="event.preventDefault()" onclick="inserirDescricao('lazer')">🚴 Lazer</button></td>
             </tr>
             <tr>
-              <td><button type="button" onclick="inserirDescricao('investimento')">👜 Invest.</button></td>
-              <td><button type="button" onclick="inserirDescricao('moradia')">🏠 Moradia</button></td>
-              <td><button type="button" onclick="inserirDescricao('doação')">🩸 Doação</button></td>
+              <td><button type="button" onpointerdown="event.preventDefault()" onclick="inserirDescricao('investimento')">👜 Invest.</button></td>
+              <td><button type="button" onpointerdown="event.preventDefault()" onclick="inserirDescricao('moradia')">🏠 Moradia</button></td>
+              <td><button type="button" onpointerdown="event.preventDefault()" onclick="inserirDescricao('doação')">🩸 Doação</button></td>
             </tr>
           </table>
 
@@ -261,8 +261,16 @@
       const campo = document.getElementById('linha');
       const btn = document.getElementById('btn-teclado');
 
+      campo.inputMode = modo;
       campo.setAttribute('inputmode', modo);
       btn.textContent = modo === 'decimal' ? '🔢 Números' : '🔤 Letras';
+    }
+
+    function focarNoFinal() {
+      const campo = document.getElementById('linha');
+      campo.focus({ preventScroll: true });
+      const len = campo.value.length;
+      campo.setSelectionRange(len, len);
     }
 
     function alternarTeclado() {
@@ -271,13 +279,7 @@
       const novoModo = modoAtual === 'decimal' ? 'text' : 'decimal';
 
       definirModoTeclado(novoModo);
-
-      campo.blur();
-      setTimeout(() => {
-        campo.focus();
-        const len = campo.value.length;
-        campo.setSelectionRange(len, len);
-      }, 50);
+      focarNoFinal();
     }
 
     window.addEventListener('DOMContentLoaded', () => definirModoTeclado('decimal'));
@@ -298,13 +300,10 @@
         }
       }
 
-      // Se estiver em números, dispara exatamente a mesma função do botão de alternar
       if (campo.getAttribute('inputmode') === 'decimal') {
         alternarTeclado();
       } else {
-        campo.focus();
-        const len = campo.value.length;
-        campo.setSelectionRange(len, len);
+        focarNoFinal();
       }
     }
 
@@ -344,7 +343,7 @@
           msg.className = 'msg ok';
           linhaInput.value = '';
           definirModoTeclado('decimal');
-          linhaInput.focus();
+          focarNoFinal();
         } else {
           throw new Error(retorno.message || 'Erro ao salvar despesa.');
         }
