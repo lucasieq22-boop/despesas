@@ -268,20 +268,23 @@
       btn.textContent = modo === 'decimal' ? '🔢 Números' : '🔤 Letras';
     }
 
-    function alternarTeclado() {
+    function focarComNovoTeclado() {
       const campo = document.getElementById('linha');
-      const modoAtual = campo.getAttribute('inputmode');
-      const novoModo = modoAtual === 'decimal' ? 'text' : 'decimal';
-
-      definirModoTeclado(novoModo);
-
-      // Força o navegador mobile (iOS/Android) a reabrir o teclado no novo layout
       campo.blur();
       setTimeout(() => {
         campo.focus();
         const len = campo.value.length;
         campo.setSelectionRange(len, len);
       }, 50);
+    }
+
+    function alternarTeclado() {
+      const campo = document.getElementById('linha');
+      const modoAtual = campo.getAttribute('inputmode');
+      const novoModo = modoAtual === 'decimal' ? 'text' : 'decimal';
+
+      definirModoTeclado(novoModo);
+      focarComNovoTeclado();
     }
 
     // Garante que ao abrir ou restaurar a página o estado inicial seja sempre Números
@@ -294,17 +297,18 @@
 
       if (!texto) {
         campo.value = descricao;
-        campo.focus();
-        return;
+      } else {
+        const partes = texto.split(/\s+/);
+        if (partes.length === 1) {
+          campo.value = texto + ' ' + descricao;
+        } else {
+          campo.value = partes[0] + ' ' + descricao;
+        }
       }
 
-      const partes = texto.split(/\s+/);
-      if (partes.length === 1) {
-        campo.value = texto + ' ' + descricao;
-      } else {
-        campo.value = partes[0] + ' ' + descricao;
-      }
-      campo.focus();
+      // Muda automaticamente para o teclado de letras e atualiza o botão para "🔤 Letras"
+      definirModoTeclado('text');
+      focarComNovoTeclado();
     }
 
     async function handleSubmit(event) {
