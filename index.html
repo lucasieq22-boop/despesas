@@ -50,12 +50,38 @@
       color: #111;
     }
 
-    label {
-      display: block;
+    .label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       margin-bottom: 6px;
+    }
+
+    label {
       font-size: 15px;
       color: #333;
       font-weight: 600;
+      margin: 0;
+    }
+
+    #btn-teclado {
+      background: #f0f2f5;
+      border: 1px solid #d0d5dd;
+      border-radius: 8px;
+      padding: 4px 10px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #333;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      -webkit-appearance: none;
+    }
+
+    #btn-teclado:active {
+      background: #e2e6ec;
+      transform: scale(0.96);
     }
 
     textarea {
@@ -186,8 +212,12 @@
 
       <form id="form-despesa" onsubmit="handleSubmit(event)">
         <div class="field">
-          <label for="linha">Despesa (valor + descrição)</label>
-          <textarea id="linha" name="linha"
+          <div class="label-row">
+            <label for="linha">Despesa (valor + descrição)</label>
+            <button type="button" id="btn-teclado" onclick="alternarTeclado()">🔤 Letras</button>
+          </div>
+
+          <textarea id="linha" name="linha" inputmode="decimal"
             placeholder="Ex: 35,90 almoço shopping&#10;Ex: 120 gasolina"
             required></textarea>
 
@@ -229,6 +259,31 @@
   <script>
     // ⚠️ SUBSTITUA PELO SEU LINK /exec DO APPS SCRIPT:
     const API_URL = "https://script.google.com/macros/s/AKfycbzDjqifo8xTwA9hsyN2JJ7Vfj661kIFjnYmHPPo-fFOO52J8I69soLye_49X7Dq73O3/exec";
+
+    function definirModoTeclado(modo) {
+      const campo = document.getElementById('linha');
+      const btn = document.getElementById('btn-teclado');
+
+      campo.setAttribute('inputmode', modo);
+      btn.textContent = modo === 'decimal' ? '🔤 Letras' : '🔢 Números';
+    }
+
+    function alternarTeclado() {
+      const campo = document.getElementById('linha');
+      const modoAtual = campo.getAttribute('inputmode');
+      const novoModo = modoAtual === 'decimal' ? 'text' : 'decimal';
+
+      definirModoTeclado(novoModo);
+
+      // Força o navegador mobile (iOS/Android) a reabrir o teclado no novo layout
+      campo.blur();
+      setTimeout(() => {
+        campo.focus();
+        // Posiciona o cursor no final do texto
+        const len = campo.value.length;
+        campo.setSelectionRange(len, len);
+      }, 50);
+    }
 
     function inserirDescricao(descricao) {
       const campo = document.getElementById('linha');
@@ -285,6 +340,7 @@
           msg.textContent = `Despesa salva! Valor: R$ ${valorFormatado} | Categoria: ${retorno.categoria}`;
           msg.className = 'msg ok';
           linhaInput.value = '';
+          definirModoTeclado('decimal'); // Volta para numérico para o próximo lançamento
           linhaInput.focus();
         } else {
           throw new Error(retorno.message || 'Erro ao salvar despesa.');
