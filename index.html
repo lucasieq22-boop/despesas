@@ -100,6 +100,10 @@
       -webkit-appearance: none;
     }
 
+    textarea.oculto {
+      display: none;
+    }
+
     textarea::placeholder {
       color: #aaa;
     }
@@ -213,13 +217,17 @@
       <form id="form-despesa" onsubmit="handleSubmit(event)">
         <div class="field">
           <div class="label-row">
-            <label for="linha">Despesa (valor + descrição)</label>
+            <label id="label-linha" for="linha-num">Despesa (valor + descrição)</label>
             <button type="button" id="btn-teclado" onclick="alternarTeclado()">🔢 Números</button>
           </div>
 
-          <textarea id="linha" name="linha" inputmode="decimal"
-            placeholder="Ex: 35,90 almoço shopping&#10;Ex: 120 gasolina"
-            required></textarea>
+          <!-- Campo nativo numérico -->
+          <textarea id="linha-num" inputmode="decimal"
+            placeholder="Ex: 35,90 almoço shopping&#10;Ex: 120 gasolina"></textarea>
+
+          <!-- Campo nativo de texto/letras -->
+          <textarea id="linha-txt" class="oculto" inputmode="text"
+            placeholder="Ex: 35,90 almoço shopping&#10;Ex: 120 gasolina"></textarea>
 
           <table class="tabela-atalhos">
             <tr>
@@ -260,68 +268,90 @@
     // ⚠️ SUBSTITUA PELO SEU LINK /exec DO APPS SCRIPT:
     const API_URL = "https://script.google.com/macros/s/AKfycbzDjqifo8xTwA9hsyN2JJ7Vfj661kIFjnYmHPPo-fFOO52J8I69soLye_49X7Dq73O3/exec";
 
-    function definirModoTeclado(modo) {
-      const campo = document.getElementById('linha');
-      const btn = document.getElementById('btn-teclado');
+    let modoAtual = 'decimal';
 
-      campo.inputMode = modo;
-      campo.setAttribute('inputmode', modo);
-      btn.textContent = modo === 'decimal' ? '🔢 Números' : '🔤 Letras';
+    function obterCampoAtivo() {
+      return modoAtual === 'decimal'
+        ? document.getElementById('linha-num')
+        : document.getElementById('linha-txt');
     }
 
-    function focarComNovoTeclado() {
-      const campo = document.getElementById('linha');
-      // Troca de foco síncrona dentro do evento de clique para o iOS/Android respeitar o novo inputmode
-      campo.blur();
-      campo.focus();
-      const len = campo.value.length;
-      campo.setSelectionRange(len, len);
+    function ativarModo(novoModo, focar = true) {
+      const campoNum = document.getElementById('linha-num');
+      const campoTxt = document.getElementById('linha-txt');
+      const btn = document.getElementById('btn-teclado');
+      const label = document.getElementById('label-linha');
+
+      // Copia o texto atual antes de trocar de elemento
+      const textoAtual = obterCampoAtivo().value;
+      campoNum.value = textoAtual;
+      campoTxt.value = textoAtual;
+
+      modoAtual = novoModo;
+
+      if (novoModo === 'decimal') {
+        campoTxt.classList.add('oculto');
+        campoNum.classList.remove('oculto');
+        btn.textContent = '🔢 Números';
+        label.setAttribute('for', 'linha-num');
+        if (focar) {
+          campoNum.focus();
+          const len = campoNum.value.length;
+          campoNum.setSelectionRange(len, len);
+        }
+      } else {
+        campoNum.classList.add('oculto');
+        campoTxt.classList.remove('oculto');
+        btn.textContent = '🔤 Letras';
+        label.setAttribute('for', 'linha-txt');
+        if (focar) {
+          campoTxt.focus();
+          const len = campoTxt.value.length;
+          campoTxt.setSelectionRange(len, len);
+        }
+      }
     }
 
     function alternarTeclado() {
-      const campo = document.getElementById('linha');
-      const modoAtual = campo.getAttribute('inputmode');
-      const novoModo = modoAtual === 'decimal' ? 'text' : 'decimal';
-
-      definirModoTeclado(novoModo);
-      focarComNovoTeclado();
+      const proximoModo = modoAtual === 'decimal' ? 'text' : 'decimal';
+      ativarModo(proximoModo, true);
     }
 
     // Garante que ao abrir ou restaurar a página o estado inicial seja sempre Números
-    window.addEventListener('DOMContentLoaded', () => definirModoTeclado('decimal'));
-    window.addEventListener('pageshow', () => definirModoTeclado('decimal'));
+    window.addEventListener('DOMContentLoaded', () => ativarModo('decimal', false));
+    window.addEventListener('pageshow', () => ativarModo('decimal', false));
 
     function inserirDescricao(descricao) {
-      const campo = document.getElementById('linha');
-      let texto = campo.value.trim();
+      const campoAtivo = obterCampoAtivo();
+      let texto = campoAtivo.value.trim();
 
       if (!texto) {
-        campo.value = descricao;
+        campoAtivo.value = descricao;
       } else {
         const partes = texto.split(/\s+/);
         if (partes.length === 1) {
-          campo.value = texto + ' ' + descricao;
+          campoAtivo.value = texto + ' ' + descricao;
         } else {
-          campo.value = partes[0] + ' ' + descricao;
+          campoAtivo.value = partes[0] + ' ' + descricao;
         }
       }
 
-      // Muda para o teclado de letras e força o foco imediato no mesmo gesto do usuário
-      definirModoTeclado('text');
-      focarComNovoTeclado();
+      // Alterna para o campo físico de texto (inputmode="text"), forçando o SO a abrir o teclado QWERTY
+      ativarModo('text', true);
     }
 
     async function handleSubmit(event) {
       event.preventDefault();
 
-      const linhaInput = document.getElementById('linha');
+      const campoAtivo = obterCampoAtivo();
       const btn = document.getElementById('btn-salvar');
       const msg = document.getElementById('mensagem');
-      const texto = linhaInput.value.trim();
+      const texto = campoAtivo.value.trim();
 
       if (!texto) {
         msg.textContent = 'Informe valor e descrição na mesma linha.';
         msg.className = 'msg erro';
+        campoAtivo.focus();
         return;
       }
 
@@ -345,9 +375,9 @@
           const valorFormatado = Number(retorno.valor).toFixed(2).replace('.', ',');
           msg.textContent = `Despesa salva! Valor: R$ ${valorFormatado} | Categoria: ${retorno.categoria}`;
           msg.className = 'msg ok';
-          linhaInput.value = '';
-          definirModoTeclado('decimal');
-          focarComNovoTeclado();
+          document.getElementById('linha-num').value = '';
+          document.getElementById('linha-txt').value = '';
+          ativarModo('decimal', true);
         } else {
           throw new Error(retorno.message || 'Erro ao salvar despesa.');
         }
