@@ -279,11 +279,14 @@
       campo.blur();
       setTimeout(() => {
         campo.focus();
-        // Posiciona o cursor no final do texto
         const len = campo.value.length;
         campo.setSelectionRange(len, len);
       }, 50);
     }
+
+    // Garante que ao abrir ou restaurar a página o estado inicial seja sempre Números
+    window.addEventListener('DOMContentLoaded', () => definirModoTeclado('decimal'));
+    window.addEventListener('pageshow', () => definirModoTeclado('decimal'));
 
     function inserirDescricao(descricao) {
       const campo = document.getElementById('linha');
@@ -324,12 +327,11 @@
       msg.className = 'msg';
 
       try {
-        // Envio direto via fetch para o Google Apps Script
         const response = await fetch(API_URL, {
           method: 'POST',
           body: JSON.stringify({ texto: texto }),
           headers: {
-            'Content-Type': 'text/plain;charset=utf-8' // text/plain evita bloqueio de CORS pré-flight
+            'Content-Type': 'text/plain;charset=utf-8'
           }
         });
 
@@ -340,7 +342,7 @@
           msg.textContent = `Despesa salva! Valor: R$ ${valorFormatado} | Categoria: ${retorno.categoria}`;
           msg.className = 'msg ok';
           linhaInput.value = '';
-          definirModoTeclado('decimal'); // Volta para numérico e exibe "🔢 Números"
+          definirModoTeclado('decimal');
           linhaInput.focus();
         } else {
           throw new Error(retorno.message || 'Erro ao salvar despesa.');
