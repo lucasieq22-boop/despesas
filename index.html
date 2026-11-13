@@ -5,11 +5,9 @@
   <title>Lançar Despesa</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-  <!-- Ícones do App (agora lidos diretamente pelo iOS sem iframe) -->
   <link rel="icon" type="image/png" href="https://base.infinityfreeapp.com/Imagens/lancar.png">
   <link rel="apple-touch-icon" sizes="180x180" href="https://base.infinityfreeapp.com/Imagens/lancar.png">
 
-  <!-- Configurações para rodar em tela cheia como App nativo -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Despesas">
@@ -98,10 +96,6 @@
       line-height: 1.35;
       display: block;
       -webkit-appearance: none;
-    }
-
-    textarea.oculto {
-      display: none;
     }
 
     textarea::placeholder {
@@ -217,17 +211,13 @@
       <form id="form-despesa" onsubmit="handleSubmit(event)">
         <div class="field">
           <div class="label-row">
-            <label id="label-linha" for="linha-num">Despesa (valor + descrição)</label>
+            <label for="linha">Despesa (valor + descrição)</label>
             <button type="button" id="btn-teclado" onclick="alternarTeclado()">🔢 Números</button>
           </div>
 
-          <!-- Campo nativo numérico -->
-          <textarea id="linha-num" inputmode="decimal"
-            placeholder="Ex: 35,90 almoço shopping&#10;Ex: 120 gasolina"></textarea>
-
-          <!-- Campo nativo de texto/letras -->
-          <textarea id="linha-txt" class="oculto" inputmode="text"
-            placeholder="Ex: 35,90 almoço shopping&#10;Ex: 120 gasolina"></textarea>
+          <textarea id="linha" name="linha" inputmode="decimal"
+            placeholder="Ex: 35,90 almoço shopping&#10;Ex: 120 gasolina"
+            required></textarea>
 
           <table class="tabela-atalhos">
             <tr>
@@ -265,93 +255,70 @@
   </div>
 
   <script>
-    // ⚠️ SUBSTITUA PELO SEU LINK /exec DO APPS SCRIPT:
     const API_URL = "https://script.google.com/macros/s/AKfycbzDjqifo8xTwA9hsyN2JJ7Vfj661kIFjnYmHPPo-fFOO52J8I69soLye_49X7Dq73O3/exec";
 
-    let modoAtual = 'decimal';
-
-    function obterCampoAtivo() {
-      return modoAtual === 'decimal'
-        ? document.getElementById('linha-num')
-        : document.getElementById('linha-txt');
-    }
-
-    function ativarModo(novoModo, focar = true) {
-      const campoNum = document.getElementById('linha-num');
-      const campoTxt = document.getElementById('linha-txt');
+    function definirModoTeclado(modo) {
+      const campo = document.getElementById('linha');
       const btn = document.getElementById('btn-teclado');
-      const label = document.getElementById('label-linha');
 
-      // Copia o texto atual antes de trocar de elemento
-      const textoAtual = obterCampoAtivo().value;
-      campoNum.value = textoAtual;
-      campoTxt.value = textoAtual;
-
-      modoAtual = novoModo;
-
-      if (novoModo === 'decimal') {
-        campoTxt.classList.add('oculto');
-        campoNum.classList.remove('oculto');
-        btn.textContent = '🔢 Números';
-        label.setAttribute('for', 'linha-num');
-        if (focar) {
-          campoNum.focus();
-          const len = campoNum.value.length;
-          campoNum.setSelectionRange(len, len);
-        }
-      } else {
-        campoNum.classList.add('oculto');
-        campoTxt.classList.remove('oculto');
-        btn.textContent = '🔤 Letras';
-        label.setAttribute('for', 'linha-txt');
-        if (focar) {
-          campoTxt.focus();
-          const len = campoTxt.value.length;
-          campoTxt.setSelectionRange(len, len);
-        }
-      }
+      campo.setAttribute('inputmode', modo);
+      btn.textContent = modo === 'decimal' ? '🔢 Números' : '🔤 Letras';
     }
 
     function alternarTeclado() {
-      const proximoModo = modoAtual === 'decimal' ? 'text' : 'decimal';
-      ativarModo(proximoModo, true);
+      const campo = document.getElementById('linha');
+      const modoAtual = campo.getAttribute('inputmode');
+      const novoModo = modoAtual === 'decimal' ? 'text' : 'decimal';
+
+      definirModoTeclado(novoModo);
+
+      campo.blur();
+      setTimeout(() => {
+        campo.focus();
+        const len = campo.value.length;
+        campo.setSelectionRange(len, len);
+      }, 50);
     }
 
-    // Garante que ao abrir ou restaurar a página o estado inicial seja sempre Números
-    window.addEventListener('DOMContentLoaded', () => ativarModo('decimal', false));
-    window.addEventListener('pageshow', () => ativarModo('decimal', false));
+    window.addEventListener('DOMContentLoaded', () => definirModoTeclado('decimal'));
+    window.addEventListener('pageshow', () => definirModoTeclado('decimal'));
 
     function inserirDescricao(descricao) {
-      const campoAtivo = obterCampoAtivo();
-      let texto = campoAtivo.value.trim();
+      const campo = document.getElementById('linha');
+      let texto = campo.value.trim();
 
       if (!texto) {
-        campoAtivo.value = descricao;
+        campo.value = descricao;
       } else {
         const partes = texto.split(/\s+/);
         if (partes.length === 1) {
-          campoAtivo.value = texto + ' ' + descricao;
+          campo.value = texto + ' ' + descricao;
         } else {
-          campoAtivo.value = partes[0] + ' ' + descricao;
+          campo.value = partes[0] + ' ' + descricao;
         }
       }
 
-      // Alterna para o campo físico de texto (inputmode="text"), forçando o SO a abrir o teclado QWERTY
-      ativarModo('text', true);
+      // Se estiver em números, dispara exatamente a mesma função do botão de alternar
+      if (campo.getAttribute('inputmode') === 'decimal') {
+        alternarTeclado();
+      } else {
+        campo.focus();
+        const len = campo.value.length;
+        campo.setSelectionRange(len, len);
+      }
     }
 
     async function handleSubmit(event) {
       event.preventDefault();
 
-      const campoAtivo = obterCampoAtivo();
+      const linhaInput = document.getElementById('linha');
       const btn = document.getElementById('btn-salvar');
       const msg = document.getElementById('mensagem');
-      const texto = campoAtivo.value.trim();
+      const texto = linhaInput.value.trim();
 
       if (!texto) {
         msg.textContent = 'Informe valor e descrição na mesma linha.';
         msg.className = 'msg erro';
-        campoAtivo.focus();
         return;
       }
 
@@ -375,9 +342,9 @@
           const valorFormatado = Number(retorno.valor).toFixed(2).replace('.', ',');
           msg.textContent = `Despesa salva! Valor: R$ ${valorFormatado} | Categoria: ${retorno.categoria}`;
           msg.className = 'msg ok';
-          document.getElementById('linha-num').value = '';
-          document.getElementById('linha-txt').value = '';
-          ativarModo('decimal', true);
+          linhaInput.value = '';
+          definirModoTeclado('decimal');
+          linhaInput.focus();
         } else {
           throw new Error(retorno.message || 'Erro ao salvar despesa.');
         }
